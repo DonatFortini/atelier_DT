@@ -12,8 +12,7 @@ const unsigned long SEND_INTERVAL = 10000;
 LoRaManager loraManager(LORA_RX_PIN, LORA_TX_PIN);
 WeatherStation weatherStation(8);
 
-void setup()
-{
+void setup() {
   Serial.begin(9600);
   weatherStation.init();
   Serial.println(F("Weather station starting"));
@@ -21,8 +20,7 @@ void setup()
   Serial.println(F("Setup completed"));
 }
 
-void loop()
-{
+void loop() {
 
   loraManager.handleLoRaMessages();
   loraManager.processSerialCommands();
@@ -31,14 +29,12 @@ void loop()
   weatherStation.printData();
 
   unsigned long currentTime = millis();
-  if ((currentTime - lastSendTime >= SEND_INTERVAL) && loraManager.isNetworkJoined())
-  {
+  if ((currentTime - lastSendTime >= SEND_INTERVAL) &&
+      loraManager.isNetworkJoined()) {
     lastSendTime = currentTime;
     loraManager.sendWeatherData(
-        weatherStation.getTemperature(),
-        weatherStation.getPressure(),
-        weatherStation.getHumidity(),
-        weatherStation.getAltitude(),
+        weatherStation.getTemperature(), weatherStation.getPressure(),
+        weatherStation.getHumidity(), weatherStation.getAltitude(),
         weatherStation.getAlertState());
   }
 
