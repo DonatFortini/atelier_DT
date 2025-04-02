@@ -32,9 +32,7 @@ WeatherStation::WeatherStation(byte dht_pin) : dht(dht_pin, DHTTYPE), hp20x() {
 
 void WeatherStation::init() {
   hp20x_init();
-  Serial.println("HP20X initialized");
   dht_init();
-  Serial.println("DHT11 initialized");
 }
 
 void WeatherStation::readSensors() {

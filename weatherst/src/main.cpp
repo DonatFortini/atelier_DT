@@ -21,13 +21,9 @@ void setup() {
 }
 
 void loop() {
-
   loraManager.handleLoRaMessages();
   loraManager.processSerialCommands();
-
   weatherStation.readSensors();
-  weatherStation.printData();
-
   unsigned long currentTime = millis();
   if ((currentTime - lastSendTime >= SEND_INTERVAL) &&
       loraManager.isNetworkJoined()) {
