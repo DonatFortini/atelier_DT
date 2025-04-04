@@ -49,7 +49,6 @@ type DashboardAction =
   | { type: "MANUAL_REFRESH" }
   | { type: "UPDATE_GRID"; payload: ParkingSpot[] };
 
-// Configuration statique du parking (grille 3x3)
 const initialParkingGrid: ParkingSpot[] = [
   {
     id: "A1",
@@ -126,7 +125,6 @@ const initialParkingGrid: ParkingSpot[] = [
   },
 ];
 
-// Nombre total d'emplacements et nombre de places handicapées
 const TOTAL_PARKING_SPOTS = 9;
 const HANDICAP_SPOTS = 2;
 
@@ -153,13 +151,10 @@ function dashboardReducer(
       };
     case "FETCH_SUCCESS": {
       const updatedData = action.payload;
-      // Prendre la dernière lecture (la plus récente) plutôt que la première
       const currentReading =
         updatedData.length > 0 ? updatedData[updatedData.length - 1] : null;
 
-      // Mise à jour de la grille de stationnement en fonction des données du capteur
       const updatedGrid = [...state.parkingGrid].map((spot) => {
-        // Mettre à jour uniquement l'emplacement avec capteur (A1)
         if (spot.hasSensor && currentReading) {
           const isOccupied = Boolean(currentReading.parkingState);
           return {
@@ -442,7 +437,13 @@ function ParkingInfo({ data }: { data: ParkingData | null }) {
   );
 }
 
-const ParkingDashboard: React.FC = () => {
+interface ParkingDashboardProps {
+  onParkingA1StateChange?: (isOccupied: boolean) => void;
+}
+
+const ParkingDashboard: React.FC<ParkingDashboardProps> = ({
+  onParkingA1StateChange,
+}) => {
   const [state, dispatch] = useReducer(dashboardReducer, initialState);
   const [forceRenderKey, setForceRenderKey] = useState(0);
 
@@ -454,15 +455,27 @@ const ParkingDashboard: React.FC = () => {
   const toggleSpotStatus = useCallback(
     (spotId: string) => {
       const updatedGrid = state.parkingGrid.map((spot) => {
-        if (spot.id === spotId && !spot.hasSensor) {
-          return { ...spot, occupied: !spot.occupied };
+        if (spot.id === spotId) {
+          if (spot.hasSensor && spot.id === "A1") {
+            const newOccupiedState = !spot.occupied;
+            if (onParkingA1StateChange) {
+              onParkingA1StateChange(newOccupiedState);
+            }
+            return {
+              ...spot,
+              occupied: newOccupiedState,
+              sensorData: newOccupiedState,
+            };
+          } else if (!spot.hasSensor) {
+            return { ...spot, occupied: !spot.occupied };
+          }
         }
         return spot;
       });
 
       dispatch({ type: "UPDATE_GRID", payload: updatedGrid });
     },
-    [state.parkingGrid]
+    [state.parkingGrid, onParkingA1StateChange]
   );
 
   const fetchData = useCallback(async () => {
@@ -470,7 +483,7 @@ const ParkingDashboard: React.FC = () => {
       dispatch({ type: "FETCH_START" });
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
 
       const response = await fetch("/api/parking", {
         signal: controller.signal,
@@ -494,13 +507,20 @@ const ParkingDashboard: React.FC = () => {
       }
 
       dispatch({ type: "FETCH_SUCCESS", payload: parkingData });
+      if (parkingData.length > 0) {
+        const latestData = parkingData[parkingData.length - 1];
+        const isA1Occupied = Boolean(latestData.parkingState);
+        if (onParkingA1StateChange) {
+          onParkingA1StateChange(isA1Occupied);
+        }
+      }
     } catch (err) {
       console.error("Erreur lors de la récupération des données:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Erreur inconnue";
       dispatch({ type: "FETCH_ERROR", error: errorMessage });
     }
-  }, [state.connectionLost]);
+  }, [state.connectionLost, onParkingA1StateChange]);
 
   useEffect(() => {
     fetchData();
@@ -509,7 +529,7 @@ const ParkingDashboard: React.FC = () => {
       () => {
         fetchData();
       },
-      state.connectionLost ? 3000 : 5000
+      state.connectionLost ? 1000 : 3000
     );
 
     const refreshInterval = setInterval(() => {

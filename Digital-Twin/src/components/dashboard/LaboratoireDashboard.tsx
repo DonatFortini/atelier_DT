@@ -157,9 +157,8 @@ function formatDataForChart(data: AirQualityData[]): ChartDataPoint[] {
 
   return data
     .map((reading, index) => {
-      // If no timestamp is available, create a fake one based on index
       const now = new Date();
-      const timeAgo = index * 30; // 30 seconds between readings
+      const timeAgo = index * 30;
       const readingTime = reading.timestamp
         ? new Date(reading.timestamp)
         : new Date(now.getTime() - timeAgo * 1000);
@@ -185,12 +184,10 @@ function formatDataForChart(data: AirQualityData[]): ChartDataPoint[] {
 }
 
 function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
-  // View mode: "single" or "all"
   const [viewMode, setViewMode] = useState("single");
-  // For single view mode, which metric to show
+
   const [selectedMetric, setSelectedMetric] = useState("aqi");
 
-  // Definition of metrics for cleaner code
   const metrics = {
     aqi: {
       key: "aqi",
@@ -218,7 +215,6 @@ function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
     },
   };
 
-  // Handle metric selection and view mode toggling
   const handleMetricSelect = (metric: string) => {
     setSelectedMetric(metric);
     setViewMode("single");
@@ -228,10 +224,8 @@ function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
     setViewMode(viewMode === "all" ? "single" : "all");
   };
 
-  // Get the current metric config for single view mode
   const currentMetric = metrics[selectedMetric as keyof typeof metrics];
 
-  // Custom tooltip that adapts based on the view mode
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload;
@@ -258,7 +252,6 @@ function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
           </div>
         );
       } else {
-        // All metrics view tooltip
         return (
           <div className="bg-card border border-border p-3 rounded-md shadow-md">
             <p className="font-medium mb-2">{dataPoint.fullTime}</p>
@@ -335,7 +328,6 @@ function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
         <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             {viewMode === "single" ? (
-              // Single metric view
               <LineChart
                 data={data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -396,7 +388,6 @@ function AirQualityChart({ data }: { data: ChartDataPoint[] }) {
                 />
               </LineChart>
             ) : (
-              // All metrics view
               <ComposedChart
                 data={data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -609,7 +600,6 @@ const LaboratoireDashboard: React.FC = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      // Use the air-quality API endpoint from the middleware
       const response = await fetch("/api/air-quality", {
         signal: controller.signal,
         cache: "no-store",

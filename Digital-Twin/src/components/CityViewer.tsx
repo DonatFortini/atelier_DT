@@ -31,8 +31,10 @@ function cloneMaterial(material: THREE.Material | THREE.Material[]) {
 
 function City({
   onBuildingSelect,
+  parkingA1Occupied,
 }: {
   onBuildingSelect: (building: BuildingType) => void;
+  parkingA1Occupied: boolean;
 }) {
   const gltf = useLoader(GLTFLoader, "/models/main.gltf", (loader) => {
     loader.manager.setURLModifier((url) => {
@@ -66,10 +68,59 @@ function City({
   const selectedBuilding = useRef<THREE.Object3D | null>(null);
   const hoveredBuilding = useRef<THREE.Object3D | null>(null);
   const clickableBuildings = useRef<THREE.Object3D[]>([]);
+  const placeA1Ref = useRef<THREE.Object3D | null>(null);
 
   const buildingMaterials = useRef(
     new Map<string, Map<string, THREE.Material | THREE.Material[]>>()
   );
+
+  const findObjectByName = useCallback(
+    (root: THREE.Object3D, name: string): THREE.Object3D | null => {
+      if (root.name === name) return root;
+
+      let result = null;
+      root.children.forEach((child) => {
+        const found = findObjectByName(child, name);
+        if (found) result = found;
+      });
+
+      return result;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!gltf.scene) return;
+
+    if (!placeA1Ref.current) {
+      const placeA1 = findObjectByName(gltf.scene, "placeA1");
+      if (placeA1) {
+        placeA1Ref.current = placeA1;
+        console.log("placeA1 found:", placeA1);
+      } else {
+        console.log("placeA1 not found in the model");
+      }
+    }
+
+    if (placeA1Ref.current) {
+      console.log(`Setting placeA1 visibility to: ${parkingA1Occupied}`);
+      placeA1Ref.current.visible = parkingA1Occupied;
+      placeA1Ref.current.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          if (mesh.material) {
+            if (Array.isArray(mesh.material)) {
+              mesh.material.forEach((mat) => {
+                mat.needsUpdate = true;
+              });
+            } else {
+              mesh.material.needsUpdate = true;
+            }
+          }
+        }
+      });
+    }
+  }, [gltf.scene, parkingA1Occupied, findObjectByName]);
 
   const storeOriginalMaterials = useCallback((building: THREE.Object3D) => {
     if (buildingMaterials.current.has(building.uuid)) return;
@@ -177,8 +228,15 @@ function City({
       "Parking",
     ];
     const buildings: THREE.Object3D[] = [];
-    console.log("gltf.scene", gltf.scene);
+    console.log("gltf.scene loaded:", gltf.scene);
+
     gltf.scene.traverse((node) => {
+      if (node.name === "placeA1") {
+        console.log("Found placeA1:", node);
+        placeA1Ref.current = node;
+        node.visible = parkingA1Occupied;
+      }
+
       if ((node as THREE.Mesh).isMesh) {
         const mesh = node as THREE.Mesh;
         mesh.castShadow = true;
@@ -236,7 +294,23 @@ function City({
     }
 
     modelReady.current = true;
-  }, [gltf.scene, highlightBuilding, storeOriginalMaterials]);
+
+    const parkingNode = buildings.find((b) => b.name === "Parking");
+    if (parkingNode) {
+      parkingNode.traverse((child) => {
+        if (child.name === "placeA1") {
+          console.log("Found placeA1 in Parking building:", child);
+          placeA1Ref.current = child;
+          child.visible = parkingA1Occupied;
+        }
+      });
+    }
+  }, [
+    gltf.scene,
+    highlightBuilding,
+    storeOriginalMaterials,
+    parkingA1Occupied,
+  ]);
 
   useFrame(() => {
     if (!modelReady.current) return;
@@ -285,11 +359,13 @@ function City({
 type CityViewerProps = {
   onBuildingSelect: (buildingType: BuildingType) => void;
   initialBuilding?: BuildingType;
+  parkingA1Occupied?: boolean;
 };
 
 const CityViewer: React.FC<CityViewerProps> = ({
   onBuildingSelect,
   initialBuilding = "Hyperviseur",
+  parkingA1Occupied = false,
 }) => {
   const lastSelectedRef = useRef<BuildingType>(initialBuilding);
 
@@ -313,7 +389,10 @@ const CityViewer: React.FC<CityViewerProps> = ({
         style={{ width: "100%", height: "100%" }}
       >
         <Suspense fallback={<Loader />}>
-          <City onBuildingSelect={handleBuildingSelect} />
+          <City
+            onBuildingSelect={handleBuildingSelect}
+            parkingA1Occupied={parkingA1Occupied}
+          />
           <OrbitControls
             enableDamping
             dampingFactor={0.05}

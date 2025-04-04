@@ -8,9 +8,13 @@ type BuildingType = "Hyperviseur" | "Laboratoire" | "Météo" | "Parking";
 
 interface DashboardProps {
   activeBuilding: BuildingType;
+  onParkingA1StateChange?: (isOccupied: boolean) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ activeBuilding }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+  activeBuilding,
+  onParkingA1StateChange,
+}) => {
   return (
     <div className="w-full h-full bg-background text-foreground p-5 overflow-y-auto">
       <h2 className="text-2xl font-bold mt-0 border-b border-border pb-3 mb-5">
@@ -20,7 +24,9 @@ const Dashboard: React.FC<DashboardProps> = ({ activeBuilding }) => {
       {activeBuilding === "Hyperviseur" && <HyperviseurDashboard />}
       {activeBuilding === "Laboratoire" && <LaboratoireDashboard />}
       {activeBuilding === "Météo" && <MeteoDashboard />}
-      {activeBuilding === "Parking" && <ParkingDashboard />}
+      {activeBuilding === "Parking" && (
+        <ParkingDashboard onParkingA1StateChange={onParkingA1StateChange} />
+      )}
     </div>
   );
 };

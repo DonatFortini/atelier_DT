@@ -151,12 +151,10 @@ export function getAlertMessage(alertState: number): string {
   }
 }
 
-// Ajoute un peu de variation aux données pour éviter les lignes droites
 function addVariation(data: WeatherData[]): WeatherData[] {
   return data.map((reading, index) => {
-    // Utilisez l'index pour créer des variations sinusoïdales
     const sinFactor = Math.sin(index * 0.5);
-    const variation = 0.1; // Facteur de variation
+    const variation = 0.1;
 
     return {
       ...reading,
@@ -171,15 +169,12 @@ function addVariation(data: WeatherData[]): WeatherData[] {
 
 function formatDataForChart(data: WeatherData[]): ChartDataPoint[] {
   if (!Array.isArray(data) || data.length === 0) return [];
-
-  // Ajouter des variations aux données pour éviter les lignes droites
   const variatedData = addVariation(data);
 
   return variatedData
     .map((reading, index) => {
-      // If no timestamp is available, create a fake one based on index
       const now = new Date();
-      const timeAgo = index * 30; // 30 seconds between readings
+      const timeAgo = index * 30;
       const readingTime = reading.timestamp
         ? new Date(reading.timestamp)
         : new Date(now.getTime() - timeAgo * 1000);
@@ -201,12 +196,9 @@ function formatDataForChart(data: WeatherData[]): ChartDataPoint[] {
 }
 
 function WeatherChart({ data }: { data: ChartDataPoint[] }) {
-  // View mode: "single" or "all"
   const [viewMode, setViewMode] = useState("single");
-  // For single view mode, which metric to show
   const [selectedMetric, setSelectedMetric] = useState("temperature");
 
-  // Definition of metrics for cleaner code
   const metrics = {
     temperature: {
       key: "temp",
@@ -242,7 +234,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
     },
   };
 
-  // Handle metric selection and view mode toggling
   const handleMetricSelect = (metric: string) => {
     setSelectedMetric(metric);
     setViewMode("single");
@@ -252,11 +243,9 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
     setViewMode(viewMode === "all" ? "single" : "all");
   };
 
-  // Normalize data for "view all" mode to make all metrics visible in same chart
   const normalizedData = useMemo(() => {
     if (viewMode !== "all") return data;
 
-    // Find min/max values for each metric to create normalization scale
     let mins = {
       temp: Infinity,
       humidity: Infinity,
@@ -278,7 +267,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
       });
     });
 
-    // Create normalized data (0-100 scale for all metrics)
     return data.map((point) => {
       const normalized: any = { ...point };
       Object.keys(mins).forEach((key) => {
@@ -286,17 +274,14 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
         const range = maxs[k] - mins[k];
         normalized[`${k}Normalized`] =
           range === 0 ? 50 : ((point[k] - mins[k]) / range) * 100;
-        // Store original values for tooltip
         normalized[`${k}Original`] = point[k];
       });
       return normalized;
     });
   }, [data, viewMode]);
 
-  // Get the current metric config for single view mode
   const currentMetric = metrics[selectedMetric as keyof typeof metrics];
 
-  // Custom tooltip that adapts based on the view mode
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload;
@@ -317,7 +302,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
           </div>
         );
       } else {
-        // All metrics view tooltip
         return (
           <div className="bg-card border border-border p-3 rounded-md shadow-md">
             <p className="font-medium mb-2">{dataPoint.fullTime}</p>
@@ -393,7 +377,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
         <div className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             {viewMode === "single" ? (
-              // Single metric view
               <LineChart
                 data={data}
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -405,7 +388,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
                   tick={{ fontSize: 12 }}
                   tickFormatter={(tick) => tick}
                   label={{
-                    value: "Horodatage",
                     position: "insideBottom",
                     offset: -10,
                     style: { fill: "var(--foreground)", fontSize: 12 },
@@ -427,7 +409,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
                   tick={{ fontSize: 12 }}
                   width={60}
                   tickFormatter={(tick) => {
-                    // Format large numbers like pressure (e.g., 1013.2 -> 1013)
                     return currentMetric.key === "pressure"
                       ? Math.round(tick)
                       : tick;
@@ -452,7 +433,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
                 />
               </LineChart>
             ) : (
-              // All metrics view (normalized) - Conserver l'approche originale
               <ComposedChart
                 data={normalizedData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -464,14 +444,12 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
                   tick={{ fontSize: 12 }}
                   tickFormatter={(tick) => tick}
                   label={{
-                    value: "Horodatage",
                     position: "insideBottom",
                     offset: -10,
                     style: { fill: "var(--foreground)", fontSize: 12 },
                   }}
                 />
 
-                {/* Y-axis with no ticks for cleaner look */}
                 <YAxis
                   domain={[0, 100]}
                   tick={false}
@@ -491,7 +469,6 @@ function WeatherChart({ data }: { data: ChartDataPoint[] }) {
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
 
-                {/* Draw each metric line */}
                 <Line
                   name={`${metrics.temperature.name}`}
                   type="monotone"
@@ -660,7 +637,6 @@ const MeteoDashboard: React.FC = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      // Use the weather API endpoint from the middleware
       const response = await fetch("/api/weather", {
         signal: controller.signal,
         cache: "no-store",

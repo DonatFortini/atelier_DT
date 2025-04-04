@@ -412,13 +412,11 @@ function ParkingWidget({
     );
   }
 
-  const totalSpaces = 9; // Parking 3x3 avec 9 places
-  // Calculate available spaces based on parkingState
+  const totalSpaces = 9;
   const occupiedSpaces = latestParking.parkingState + 2;
   const availableSpaces = totalSpaces - occupiedSpaces;
   const occupancyRate = (occupiedSpaces / totalSpaces) * 100;
 
-  // Déterminer le statut basé sur le taux d'occupation
   let status = latestParking.parkingStatus || "Disponible";
   if (!latestParking.parkingStatus) {
     if (occupancyRate > 90) {
@@ -518,7 +516,6 @@ function InfrastructureStatus() {
   );
 }
 
-// Main fetch function for hypervisor data
 async function fetchHypervisorData(
   controller: AbortController
 ): Promise<HypervisorData> {
@@ -653,7 +650,6 @@ const HyperviseurDashboard: React.FC = () => {
     </Alert>
   );
 
-  // Récupérer les dernières données de chaque source
   const latestWeather = state.data.weather?.length
     ? state.data.weather[state.data.weather.length - 1]
     : null;
