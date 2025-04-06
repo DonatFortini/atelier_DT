@@ -6,7 +6,7 @@ import simpleApiMiddleware from "./vite-api-middleware";
 export default defineConfig({
   plugins: [react(), tailwindcss(), simpleApiMiddleware()],
   server: {
-    port: 5125,
+    port: 5050,
     open: true,
     host: true,
   },
