@@ -398,7 +398,7 @@ const CityViewer: React.FC<CityViewerProps> = ({
             dampingFactor={0.05}
             maxPolarAngle={Math.PI / 2}
           />
-          <Environment preset="sunset" />
+          <Environment files={"/venice_sunset_1k.hdr"} />
         </Suspense>
       </Canvas>
       <div className="absolute bottom-4 left-4 bg-black/70 text-white p-2 rounded text-sm z-10">

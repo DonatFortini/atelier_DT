@@ -35,14 +35,14 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen">
-      <div className="w-2/3 h-full">
+      <div className="w-1/2 h-full">
         <CityViewer
           onBuildingSelect={handleBuildingSelect}
           initialBuilding={activeBuilding}
           parkingA1Occupied={parkingA1Occupied}
         />
       </div>
-      <div className="w-1/3 h-full">
+      <div className="w-1/2 h-full">
         <Dashboard
           activeBuilding={activeBuilding}
           onParkingA1StateChange={handleParkingA1StateChange}
